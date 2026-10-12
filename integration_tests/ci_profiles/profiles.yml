@@ -1,0 +1,9 @@
+# Local test profile: DuckDB, a file inside this folder. No credentials.
+native_dq_integration_tests:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: native_dq_dev.duckdb
+      schema: analytics
+      threads: 1

@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: dq_rule_catalog
+    description: One row per declared rule, built from the rules YAML at run time.
+    columns:
+      - name: rule_id
+        data_tests: [unique, not_null]
+      - name: result_name
+        description: The expectation (Snowflake) or expectation name (Databricks) the results carry.
+  - name: dq_results
+    description: Every check result, one row per rule per run, with the rule's metadata.
+  - name: dq_latest
+    description: Each active rule's state now (pass, fail, or no result yet). Power BI scorecard.
+    columns:
+      - name: rule_id
+        data_tests: [unique, not_null]
+      - name: status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['pass', 'fail', 'no result']
+  - name: dq_daily_scores
+    description: Pass rate per rule per day. Power BI trend lines.

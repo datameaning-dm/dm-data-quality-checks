@@ -1,0 +1,118 @@
+# Data quality rules as code. One versioned file, deployed unchanged to dev, test and prod.
+# Each rule: id, type, the column(s) it checks, and who to tell when it fails.
+# Column data_type is only needed where a rule builds a custom Snowflake function (range, expression, custom).
+version: 2
+
+models:
+  - name: orders
+    description: Synthetic orders, with planted errors for the checks to find.
+    config:
+      meta:
+        native_dq:
+          steward: steward.sales@example.com
+          schedule: TRIGGER_ON_CHANGES
+          rules:
+            - id: orders_order_id_unique
+              type: unique
+              column: order_id
+              severity: critical
+              description: Each order appears once.
+            - id: orders_customer_id_not_null
+              type: not_null
+              column: customer_id
+              severity: critical
+              description: An order without a customer cannot be billed.
+            - id: orders_status_accepted
+              type: accepted_values
+              column: status
+              values: [OPEN, SHIPPED, CLOSED, CANCELLED]
+              severity: high
+            - id: orders_amount_range
+              type: range
+              column: amount
+              min: 0
+              max: 100000
+              severity: high
+              databricks_action: drop
+            - id: orders_ship_after_order
+              type: expression
+              expression: ship_date IS NULL OR ship_date >= order_date
+              columns: [order_date, ship_date]
+              dimension: consistency
+            - id: orders_cancelled_have_no_amount
+              type: custom
+              columns: [status, amount]
+              sql: SELECT COUNT(*) FROM T WHERE STATUS = 'CANCELLED' AND AMOUNT <> 0
+              dimension: consistency
+              steward: steward.finance@example.com
+              description: A cancelled order carries no amount.
+            - id: orders_legacy_discount
+              type: range
+              column: amount
+              max: 50000
+              status: retired
+              description: Replaced by orders_amount_range. Retired rules are removed on the next deploy.
+    columns:
+      - name: order_id
+        data_type: NUMBER(38,0)
+      - name: customer_id
+        data_type: NUMBER(38,0)
+      - name: status
+        data_type: VARCHAR
+      - name: amount
+        data_type: NUMBER(12,2)
+      - name: order_date
+        data_type: DATE
+      - name: ship_date
+        data_type: DATE
+
+  - name: customers
+    config:
+      meta:
+        native_dq:
+          steward: steward.crm@example.com
+          rules:
+            - id: customers_customer_id_unique
+              type: unique
+              column: customer_id
+              severity: critical
+            - id: customers_email_not_null
+              type: not_null
+              column: email
+              threshold: 1
+              description: At most one customer may lack an email address.
+            - id: customers_country_accepted
+              type: accepted_values
+              column: country
+              values: [US, CA, MX]
+              databricks_action: check_constraint
+    columns:
+      - name: customer_id
+        data_type: NUMBER(38,0)
+      - name: email
+        data_type: VARCHAR
+      - name: country
+        data_type: VARCHAR(2)
+
+sources:
+  - name: landing
+    schema: analytics
+    tables:
+      - name: raw_customers
+        config:
+          meta:
+            native_dq:
+              steward: steward.crm@example.com
+              schedule: USING CRON 0 7 * * * UTC
+              rules:
+                - id: raw_customers_min_rows
+                  type: row_count_min
+                  min_rows: 1
+                - id: raw_customers_fresh
+                  type: freshness
+                  column: loaded_at
+                  max_age_seconds: 93600
+                  description: Loaded within the last 26 hours.
+        columns:
+          - name: loaded_at
+            data_type: TIMESTAMP_LTZ

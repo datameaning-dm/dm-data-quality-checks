@@ -1,0 +1,6 @@
+customer_id,email,country,signup_at,loaded_at
+1,ana.example@example.com,US,2025-01-15 10:00:00,2026-09-06 06:00:00
+2,ben.example@example.com,CA,2025-03-02 12:30:00,2026-09-06 06:00:00
+3,,MX,2025-05-20 08:15:00,2026-09-06 06:00:00
+4,dee.example@example.com,BR,2025-07-11 17:45:00,2026-09-06 06:00:00
+5,eli.example@example.com,US,2025-09-30 09:05:00,2026-09-06 06:00:00

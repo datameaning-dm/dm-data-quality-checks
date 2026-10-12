@@ -1,0 +1,27 @@
+# Example project that uses the native_dq package, on synthetic data.
+# Runs locally on DuckDB (no Snowflake or Databricks account needed) to test the package.
+name: native_dq_integration_tests
+version: "0.1.0"
+config-version: 2
+profile: native_dq_integration_tests
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+
+vars:
+  # Preview Snowflake SQL by default. Override with --vars '{native_dq_platform: databricks}'.
+  native_dq_platform: snowflake
+  native_dq_dry_run: true
+  native_dq_execute_as_role: DQ_RUNNER
+
+models:
+  native_dq_integration_tests:
+    +materialized: table
+    # Re-attach each model's checks right after it is built.
+    +post-hook: "{{ native_dq.native_dq_apply() }}"
+
+seeds:
+  native_dq_integration_tests:
+    +column_types:
+      measured_at: timestamp

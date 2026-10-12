@@ -1,0 +1,56 @@
+# Copy to ~/.dbt/profiles.yml (or set DBT_PROFILES_DIR) and fill the placeholders.
+# One profile, three targets: the same rules YAML deploys to dev, test and prod.
+# The package qualifies every name with the target's database, so nothing in the rules changes per environment.
+# Secrets come from environment variables, never from this file.
+
+native_dq_integration_tests:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      authenticator: externalbrowser
+      role: DQ_DEPLOYER
+      warehouse: DQ_WH
+      database: ANALYTICS_DEV
+      schema: SALES
+      threads: 4
+    test:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_CI_USER') }}"
+      private_key_path: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH') }}"
+      role: DQ_DEPLOYER
+      warehouse: DQ_WH
+      database: ANALYTICS_TEST
+      schema: SALES
+      threads: 4
+    prod:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_CI_USER') }}"
+      private_key_path: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH') }}"
+      role: DQ_DEPLOYER
+      warehouse: DQ_WH
+      database: ANALYTICS_PROD
+      schema: SALES
+      threads: 4
+
+    # Databricks: the catalog plays the role of the database.
+    dbx_dev:
+      type: databricks
+      host: "{{ env_var('DATABRICKS_HOST') }}"
+      http_path: "{{ env_var('DATABRICKS_HTTP_PATH') }}"
+      token: "{{ env_var('DATABRICKS_TOKEN') }}"
+      catalog: analytics_dev
+      schema: sales
+      threads: 4
+    dbx_prod:
+      type: databricks
+      host: "{{ env_var('DATABRICKS_HOST') }}"
+      http_path: "{{ env_var('DATABRICKS_HTTP_PATH') }}"
+      token: "{{ env_var('DATABRICKS_TOKEN') }}"
+      catalog: analytics_prod
+      schema: sales
+      threads: 4
