@@ -5,6 +5,11 @@ require-dbt-version: [">=1.10.0", "<2.0.0"]
 
 macro-paths: ["macros"]
 model-paths: ["models"]
+# The package ships macros and models only. The pytest suite lives in tests/, not dbt tests.
+test-paths: ["dbt_tests"]
+seed-paths: ["dbt_seeds"]
+snapshot-paths: ["dbt_snapshots"]
+analysis-paths: ["dbt_analyses"]
 
 models:
   native_dq:
