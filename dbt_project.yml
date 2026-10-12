@@ -1,0 +1,30 @@
+name: native_dq
+version: "0.1.0"
+config-version: 2
+require-dbt-version: [">=1.8.0", "<2.0.0"]
+
+macro-paths: ["macros"]
+model-paths: ["models"]
+
+models:
+  native_dq:
+    +materialized: view
+
+vars:
+  # Which SQL to generate. Defaults to the adapter (snowflake or databricks).
+  # Set it explicitly to preview another platform's SQL, e.g. on duckdb.
+  native_dq_platform: null
+  # true: print the SQL and run nothing. false: run it.
+  native_dq_dry_run: true
+  # Snowflake schema (in the target database) that holds custom data metric functions.
+  native_dq_dmf_schema: DATA_QUALITY
+  # Prefix for expectation, constraint and custom function names. Marks what this package owns.
+  native_dq_prefix: DQ_
+  # Snowflake DATA_METRIC_SCHEDULE applied to every table with rules.
+  native_dq_schedule: TRIGGER_ON_CHANGES
+  # Snowflake role the checks run as (EXECUTE AS ROLE). null = omit the clause.
+  native_dq_execute_as_role: null
+  # Databricks: table that stores the portable expectations (name, constraint, tag).
+  native_dq_databricks_rules_table: dq_ops.dq_rules
+  # Databricks: event log source for results, e.g. event_log('<pipeline id>') or a published table.
+  native_dq_databricks_event_log: null
