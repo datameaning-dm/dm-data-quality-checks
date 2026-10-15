@@ -1,6 +1,6 @@
 # native_dq: data quality rules as code, run natively in Snowflake and Databricks
 
-> **Private draft.** Not published. Making it public, and choosing a license, is Data Meaning's decision.
+> **Private draft.** Not published yet. Making it public is Data Meaning's decision.
 
 > **Not yet verified against a live Snowflake account or Databricks workspace.**
 > The generated SQL follows the vendor docs listed below, and the tests run locally on DuckDB.
@@ -239,4 +239,5 @@ Databricks:
 
 ## License
 
-To be chosen by Data Meaning before publishing. See [LICENSE](LICENSE).
+Apache License 2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
+Copyright 2026 Data Meaning.
