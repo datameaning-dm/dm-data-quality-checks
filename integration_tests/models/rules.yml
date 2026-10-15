@@ -96,7 +96,8 @@ models:
 
 sources:
   - name: landing
-    schema: analytics
+    # Seeds load into the target schema, whichever platform runs the tests.
+    schema: "{{ target.schema }}"
     tables:
       - name: raw_customers
         config:

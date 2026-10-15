@@ -2,9 +2,10 @@
 
 > **Private draft.** Not published yet. Making it public is Data Meaning's decision.
 
-> **Not yet verified against a live Snowflake account or Databricks workspace.**
-> The generated SQL follows the vendor docs listed below, and the tests run locally on DuckDB.
-> Nothing here has run on Snowflake or Databricks yet. Test in a development account first.
+> **Tested on Snowflake Enterprise Edition, 2026-10-15.** Every rule type deployed, and each check
+> found exactly the errors planted in the sample data. See [Tested on Snowflake](#tested-on-snowflake).
+> **Databricks: not yet tested live.** The Databricks SQL follows the vendor docs listed below and
+> passes the local tests on DuckDB. Test in a development workspace first.
 
 ## What it is
 
@@ -184,12 +185,14 @@ After an intended SQL change, run with `UPDATE_SNAPSHOTS=1` and review the diff.
 
 ## Limitations
 
-- **Not yet verified on a live account.** See the list below.
+- **Databricks is not yet tested live**, and parts of the Snowflake setup are not either. See the lists below.
 - Snowflake data quality monitoring needs Enterprise Edition or higher.
 - Snowflake allows one system DMF of a kind per column. Two `accepted_values` rules on one column are
   refused: combine them. Redeploying a rule also replaces a hand-made DMF of the same kind on that column.
 - Snowflake `FRESHNESS` takes DATE, TIMESTAMP_LTZ or TIMESTAMP_TZ, not TIMESTAMP_NTZ. The validator
-  refuses `freshness` on a column declared TIMESTAMP_NTZ.
+  refuses `freshness` on a column declared TIMESTAMP_NTZ. The declared type must match the real column:
+  if the YAML says TIMESTAMP_LTZ but the table holds TIMESTAMP_NTZ, Snowflake fails the deploy with
+  "Function 'FRESHNESS$V1' does not exist or not authorized".
 - Custom DMF bodies must be deterministic. Snowflake refuses `CURRENT_TIMESTAMP` and similar there.
 - `TRIGGER_ON_CHANGES` works only on some kinds of tables. Use a minute or cron schedule for views.
 - Databricks expectations run only on tables a Lakeflow pipeline builds. `unique`, `freshness`,
@@ -197,11 +200,28 @@ After an intended SQL change, run with `UPDATE_SNAPSHOTS=1` and review the diff.
 - Removing a rule from the YAML does not remove its check. Set `status: retired` first, deploy, then delete.
 - Rule text goes into DDL, so names must be plain identifiers, and `;`, `$$`, `--` and backslashes are refused.
 
+## Tested on Snowflake
+
+On 2026-10-15, on Snowflake Enterprise Edition (AWS us-east-1), with dbt-core 1.12 and dbt-snowflake
+1.12, using the `integration_tests` project and its sample data, deployed by a sandbox role with key-pair sign-in:
+
+- `dbt run` built both models, and the post-hook attached every rule's DMF after dbt replaced each table.
+  A second `dbt run` replaced the tables again, and every check was back afterwards.
+- `dbt run-operation native_dq_deploy` ran all 31 statements, including the source table's rules, and
+  ran again cleanly on top of itself.
+- Custom DMFs were created with `NUMBER(12,2)` and `DATE` signatures; the retired rule's DMF was dropped
+  by its signature; the `EXECUTE IMMEDIATE ... EXCEPTION WHEN OTHER THEN NULL` detach step ran through
+  the dbt-snowflake connector.
+- Every attachment showed `STARTED`, with the table's schedule.
+- `SYSTEM$EVALUATE_DATA_QUALITY_EXPECTATIONS` returned, for all 10 active rules, exactly the counts and
+  the pass or fail the local tests expect. `freshness` correctly failed on the sample data, which is
+  weeks old.
+
 ## Needs a live account to confirm
 
-- Snowflake: the `EXECUTE IMMEDIATE ... EXCEPTION WHEN OTHER THEN NULL` detach step runs through the
-  dbt-snowflake connector; `CREATE OR REPLACE` of a custom DMF right after detaching; `NUMBER(12,2)` in
-  a DMF signature; `DROP FUNCTION` matching that signature; the post-hook timing after dbt's table swap.
+- Snowflake: the `dq_results` view and the three views built on it. The test role did not hold the
+  `SNOWFLAKE.DATA_QUALITY_MONITORING_VIEWER` application role that the grants file lists, so the
+  view could not read `DATA_QUALITY_MONITORING_EXPECTATION_STATUS`.
 - Snowflake alerting: `CALL SYSTEM$SEND_EMAIL` with bound variables inside the procedure; the 10-minute
   margin for results to land; `GRANT USAGE ON ALL FUNCTIONS` covering DMFs.
 - Databricks: the backslash-escaped quotes in the rules table insert; the event log column paths and
