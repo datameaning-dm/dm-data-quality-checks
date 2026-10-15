@@ -1,7 +1,5 @@
 # native_dq: data quality rules as code, run natively in Snowflake and Databricks
 
-> **Private draft.** Not published yet. Making it public is Data Meaning's decision.
-
 > **Tested on Snowflake Enterprise Edition, 2026-10-15.** Every rule type deployed, and each check
 > found exactly the errors planted in the sample data. See [Tested on Snowflake](#tested-on-snowflake).
 > **Databricks: not yet tested live.** The Databricks SQL follows the vendor docs listed below and
@@ -256,6 +254,13 @@ Databricks:
 - [Constraints (CHECK, NOT NULL)](https://docs.databricks.com/aws/en/tables/constraints),
   [DROP CONSTRAINT](https://docs.databricks.com/aws/en/sql/language-manual/sql-ref-syntax-ddl-alter-table-drop-constraint)
 - [SQL alerts](https://docs.databricks.com/aws/en/sql/user/alerts/)
+
+## Want it run for you?
+
+This package is free under Apache 2.0. Data Meaning also offers
+[Native Data Quality](https://www.datameaning.com/solutions/native-data-quality.html), a managed version
+that deploys into your own Azure subscription and keeps the checks, alerts and reports running in
+Snowflake and Databricks.
 
 ## License
 
